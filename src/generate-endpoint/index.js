@@ -11,6 +11,7 @@ export default function (opts) {
   let accountId = opts.accountId
   let path = opts.path
   let method = opts.method
+  let region = opts.region || 'us-east-1';
 
   if (!accountId) {
     throw new Error('Unable to determine your AWS Account ID. Please set it in the `shep` section of package.json')
@@ -28,7 +29,7 @@ export default function (opts) {
     },
     {
       title: 'Setup Endpoint',
-      task: () => addPath(api, path, method, accountId, fullName)
+      task: () => addPath(api, path, method, accountId, fullName, region)
     },
     {
       title: 'Setup CORS',
@@ -43,7 +44,7 @@ export default function (opts) {
   return tasks.run()
 }
 
-function addPath (api, path, method, accountId, functionName) {
+function addPath (api, path, method, accountId, functionName, region) {
   if (method === 'any') { method = 'x-amazon-apigateway-any-method' }
 
   if (!api.paths) {
@@ -54,7 +55,7 @@ function addPath (api, path, method, accountId, functionName) {
   if (api.paths[path][method] !== undefined) { throw new Error(`Method '${method}' on path '${path}' already exists`) }
   api.paths[path][method] = api.paths[path][method] || {}
   api.paths[path][method][integration] = {
-    uri: `arn:aws:apigateway:us-east-1:lambda:path/2015-03-31/functions/arn:aws:lambda:us-east-1:${accountId}:function:${functionName}:\${stageVariables.functionAlias}/invocations`,
+    uri: `arn:aws:apigateway:${region}:lambda:path/2015-03-31/functions/arn:aws:lambda:${region}:${accountId}:function:${functionName}:\${stageVariables.functionAlias}/invocations`,
     passthroughBehavior: 'when_no_match',
     httpMethod: 'POST',
     type: 'aws_proxy'
